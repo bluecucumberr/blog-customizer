@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowButton } from 'src/ui/arrow-button';
 import { Button } from 'src/ui/button';
 import { Select } from 'src/ui/select';
+import { Text } from 'src/ui/text';
 
 import {
 	ArticleStateType,
@@ -16,20 +17,20 @@ import {
 import { RadioGroup } from 'src/ui/radio-group/RadioGroup';
 import { Separator } from 'src/ui/separator/Separator';
 import styles from './ArticleParamsForm.module.scss';
+import clsx from 'clsx';
 
 type TArticleParamsForm = {
-	updateArticleTypes: (newTypes: ArticleStateType) => void;
+	setArticleState: (newTypes: ArticleStateType) => void;
 };
 
-export const ArticleParamsForm = ({
-	updateArticleTypes,
-}: TArticleParamsForm) => {
+export const ArticleParamsForm = ({ setArticleState }: TArticleParamsForm) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const formRef = useRef<HTMLDivElement>(null);
 
 	const [selectedValue, setSelectedValue] = useState(defaultArticleState);
 
 	useEffect(() => {
+		if (!isOpen) return;
 		const handleClickOutside = (e: MouseEvent) => {
 			if (formRef.current && !formRef.current.contains(e.target as Node)) {
 				setIsOpen(false);
@@ -40,39 +41,36 @@ export const ArticleParamsForm = ({
 		return () => {
 			document.removeEventListener('mousedown', handleClickOutside);
 		};
-	}, []);
+	}, [isOpen]);
 
 	const resetForm = () => {
 		setSelectedValue(defaultArticleState);
-		updateArticleTypes(defaultArticleState);
+		setArticleState(defaultArticleState);
 	};
 
-	const handleChange = (
-		key: keyof ArticleStateType,
-		value: OptionType | null
-	) => {
+	const handleChange = (key: keyof ArticleStateType, value: OptionType) => {
 		setSelectedValue((prev) => ({ ...prev, [key]: value }));
 	};
 
 	const submitChanges = (e: React.FormEvent) => {
 		e.preventDefault();
-		updateArticleTypes(selectedValue);
+		setArticleState(selectedValue);
 	};
 
 	return (
 		<>
-			<ArrowButton
-				isOpen={isOpen}
-				onClick={() => {
-					setIsOpen((prev) => !prev);
-				}}
-			/>
+			<ArrowButton isOpen={isOpen} onClick={() => setIsOpen((prev) => !prev)} />
 			<aside
 				ref={formRef}
-				className={`${styles.container} ${
-					isOpen ? styles.container_open : ''
-				}`}>
-				<form className={styles.form} onSubmit={submitChanges}>
+				className={clsx(styles.container, { [styles.container_open]: isOpen })}>
+				<form
+					className={styles.form}
+					onSubmit={submitChanges}
+					onReset={resetForm}>
+					<Text as='h2' size={31} uppercase weight={800}>
+						Задайте параметры
+					</Text>
+
 					<Select
 						title='Шрифт'
 						selected={selectedValue.fontFamilyOption}
@@ -112,12 +110,7 @@ export const ArticleParamsForm = ({
 					/>
 
 					<div className={styles.bottomContainer}>
-						<Button
-							title='Сбросить'
-							htmlType='reset'
-							type='clear'
-							onClick={resetForm}
-						/>
+						<Button title='Сбросить' htmlType='reset' type='clear' />
 						<Button title='Применить' htmlType='submit' type='apply' />
 					</div>
 				</form>
